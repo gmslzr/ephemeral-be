@@ -1,6 +1,27 @@
-# FastAPI Kafka Backend
+# Ephemeral: A Tiny Kafka SaaS That Shouldn't Exist.
 
-A FastAPI backend service that allows users to create, produce, and consume messages from Kafka topics. Each user gets their own Kafka topic for message publishing and streaming.
+A fun-sized service that lets users spawn a Kafka topic on demand. For free.
+
+Spin up a topic. Produce. Consume. Blow it up. Repeat.
+
+Shamelessly inspired by [The Kafka Guy](https://www.linkedin.com/posts/stanislavkozlovski_kafka-apachekafka-kafkacosts-activity-7395803182750216192-o_27).
+
+Vibecoded on a lazy weekend using ChatGPT & Cursor.
+
+## Why?
+
+Sometimes you don't need:
+- A horizontally scalable cluster engineered for theoretical peak throughput.
+- A Kubernetes cluster to print 'Hello World'.
+- 99.9999% availability.
+- A 30-min deployment that fails on step 15.
+- A credit card.
+
+Sometimes all you need is:
+- A shipped product.
+- 1 topic.
+- 1 tiny API.
+- An [enshitification](https://www.urbandictionary.com/define.php?term=Enshitification)-free environment.
 
 ## Features
 
@@ -86,10 +107,6 @@ The API will be available at `http://localhost:8000`
 
 API documentation (Swagger UI): `http://localhost:8000/docs`
 
-## API Endpoints
-
-📖 **For complete API documentation with all endpoints, request/response schemas, and examples, see [API_ENDPOINTS.md](./API_ENDPOINTS.md)**
-
 ### Quick Reference
 
 - **Public**: `/`, `/healthcheck`
@@ -102,12 +119,12 @@ API documentation (Swagger UI): `http://localhost:8000/docs`
 
 ### Authentication Methods
 
-1. **JWT Token** (recommended for user-facing operations):
+1. **JWT Token** (for humans):
    ```
    Authorization: Bearer <jwt_token>
    ```
 
-2. **API Key** (for programmatic access):
+2. **API Key** (for robots):
    ```
    Authorization: Bearer <api_key_secret>
    ```
@@ -117,11 +134,11 @@ All authenticated endpoints require one of the above authentication methods.
 
 ## Quota Limits
 
-### Per-User Free Tier Limits
+### Free Tier
 - **Messages**: 10,000 per day (inbound or outbound)
 - **Bytes**: 100 MB per day (inbound or outbound)
 
-### Cluster-Wide Limits (Panic Brake)
+### If this ever hits we're done.
 - **Total Messages In**: 200,000 per day
 - **Total Bytes In**: 2 GB per day
 
@@ -227,9 +244,9 @@ alembic downgrade -1
 
 ### Code Style
 
-The project follows Python best practices and uses type hints throughout.
+Seriously vibecoded.
 
 ## License
 
-[Add your license here]
+What license?
 
