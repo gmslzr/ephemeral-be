@@ -1,9 +1,7 @@
 # Ephemeral: A Tiny Kafka SaaS That Shouldn't Exist.
 
-A fun-sized service that lets users spawn a Kafka topic on demand. For free.
-
-Spin up a topic. Produce. Consume. Blow it up. Repeat.
-
+A fun-sized service that lets users spawn a Kafka topic on demand. For free.  
+Spin up a topic. Produce. Consume. Blow it up. Repeat.  
 Shamelessly inspired by [The Kafka Guy](https://www.linkedin.com/posts/stanislavkozlovski_kafka-apachekafka-kafkacosts-activity-7395803182750216192-o_27).
 
 Vibecoded on a lazy weekend using ChatGPT & Cursor.
@@ -204,23 +202,22 @@ for line in response.iter_lines():
 ## Project Structure
 
 ```
-api-01-kf/
-├── app/
-│   ├── __init__.py
-│   ├── main.py                 # FastAPI app entry point
-│   ├── config.py               # Environment configuration
-│   ├── database.py             # SQLAlchemy setup
-│   ├── models.py               # Database models
-│   ├── schemas.py              # Pydantic schemas
-│   ├── auth.py                 # Password hashing & JWT
-│   ├── dependencies.py         # FastAPI dependencies
-│   ├── kafka_service.py        # Kafka admin & producer
-│   ├── quota_service.py        # Quota checking
-│   ├── connection_tracker.py  # Stream connection tracking
-│   └── routers/
-│       ├── auth.py             # Auth endpoints
-│       ├── topics.py            # Topic endpoints
-│       └── api_keys.py          # API key endpoints
+app/
+├── __init__.py
+├── main.py                 # FastAPI app entry point
+├── config.py               # Environment configuration
+├── database.py             # SQLAlchemy setup
+├── models.py               # Database models
+├── schemas.py              # Pydantic schemas
+├── auth.py                 # Password hashing & JWT
+├── dependencies.py         # FastAPI dependencies
+├── kafka_service.py        # Kafka admin & producer
+├── quota_service.py        # Quota checking
+├── connection_tracker.py  # Stream connection tracking
+└── routers/
+    ├── auth.py             # Auth endpoints
+    ├── topics.py            # Topic endpoints
+    └── api_keys.py          # API key endpoints
 ├── migrations/                 # Alembic migrations
 ├── alembic.ini                 # Alembic config
 ├── requirements.txt            # Python dependencies
@@ -242,11 +239,25 @@ alembic upgrade head
 alembic downgrade -1
 ```
 
-### Code Style
+## Code Style
 
 Seriously vibecoded.
 
+## Wishlist
+
+- **SDKs for different languages**  
+  Python and Go should be fun to build.
+
+- **Migration to the Grown-Ups**  
+  Confluent, Redpanda… *in case you make it in the world*.
+
+- **Real Deployment Guides**  
+  Docker? Kubernetes?
+
+- **Others**  
+  Webhooks. Dead-letter queues. 
+
 ## License
 
-What license?
+What's a license? *Asking for a friend.*
 
