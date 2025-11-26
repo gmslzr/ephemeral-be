@@ -263,5 +263,5 @@ This project is licensed under the MIT License.
 
 ## Author
 
-Guillermo Salazar
+Guillermo Salazar  
 Distributed Systems Engineer
