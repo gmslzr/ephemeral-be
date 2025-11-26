@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     kafka_bootstrap_servers: str = Field(default="localhost:9092", description="Kafka bootstrap servers")
     admin_api_key: str = Field(default="", description="Admin API key for admin endpoints")
     cors_origins_str: str = Field(
-        default="http://localhost:3000,http://localhost:8000",
+        default="http://localhost:3000,http://localhost:8000,http://localhost:5173",
         alias="CORS_ORIGINS",
         description="Comma-separated list of allowed CORS origins"
     )

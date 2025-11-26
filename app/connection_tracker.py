@@ -12,7 +12,7 @@ class ConnectionInfo:
 
 _connections: Dict[str, Set[ConnectionInfo]] = {}
 _lock = Lock()
-MAX_CONNECTIONS_PER_USER = 2
+MAX_CONNECTIONS_PER_USER = 3
 
 
 def register_connection(user_id: str, topic_name: str) -> tuple[bool, str]:

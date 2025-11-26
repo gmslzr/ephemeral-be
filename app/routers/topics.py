@@ -9,7 +9,7 @@ from app.models import Project, Topic
 from app.schemas import PublishRequest, PublishResponse, TopicResponse, TopicsListResponse
 from app.dependencies import get_current_user
 from app.kafka_service import publish_messages
-from app.quota_service import check_quota, increment_usage
+from app.quota_service import check_quota, increment_usage, check_and_increment_usage
 from app.connection_tracker import register_connection, unregister_connection
 from app.config import settings
 from app.rate_limiter import limiter
@@ -74,9 +74,9 @@ def list_topics(
 @router.post("/{topic_name}/publish", response_model=PublishResponse)
 @limiter.limit(f"{settings.rate_limit_requests}/{settings.rate_limit_period}")
 def publish(
-    http_request: Request,
+    request: Request,
     topic_name: str,
-    request: PublishRequest,
+    publish_request: PublishRequest,
     user_project: tuple = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -126,11 +126,11 @@ def publish(
             detail="Topic not found"
         )
     
-    request_id = getattr(http_request.state, "request_id", None)
+    request_id = getattr(request.state, "request_id", None)
     user_id = str(user.id)
     
     # Validate payload size for each message (64KB limit)
-    for i, msg in enumerate(request.messages):
+    for i, msg in enumerate(publish_request.messages):
         message_bytes = len(json.dumps(msg.value).encode('utf-8'))
         if message_bytes > MAX_PAYLOAD_SIZE:
             logger.log_publish(
@@ -139,8 +139,8 @@ def publish(
                 bytes=message_bytes,
                 status="validation_error",
                 request_id=request_id,
-                path=http_request.url.path,
-                method=http_request.method,
+                path=request.url.path,
+                method=request.method,
                 error=f"Message at index {i} exceeds maximum payload size of {MAX_PAYLOAD_SIZE // 1024}KB (size: {message_bytes} bytes)"
             )
             raise HTTPException(
@@ -149,8 +149,8 @@ def publish(
             )
     
     # Calculate bytes and message count
-    message_count = len(request.messages)
-    bytes_count = sum(len(json.dumps(msg.value).encode('utf-8')) for msg in request.messages)
+    message_count = len(publish_request.messages)
+    bytes_count = sum(len(json.dumps(msg.value).encode('utf-8')) for msg in publish_request.messages)
     
     # Check quotas
     try:
@@ -170,15 +170,15 @@ def publish(
                 bytes=bytes_count,
                 status="quota_exceeded",
                 request_id=request_id,
-                path=http_request.url.path,
-                method=http_request.method,
+                path=request.url.path,
+                method=request.method,
                 error=e.detail
             )
         raise
     
     # Publish to Kafka
     try:
-        messages_data = [{"value": msg.value} for msg in request.messages]
+        messages_data = [{"value": msg.value} for msg in publish_request.messages]
         publish_messages(topic.kafka_topic_name, messages_data)
     except Exception as e:
         error_msg = str(e)
@@ -188,8 +188,8 @@ def publish(
             bytes=bytes_count,
             status="kafka_error",
             request_id=request_id,
-            path=http_request.url.path,
-            method=http_request.method,
+            path=request.url.path,
+            method=request.method,
             error=error_msg
         )
         raise HTTPException(
@@ -214,8 +214,8 @@ def publish(
         bytes=bytes_count,
         status="ok",
         request_id=request_id,
-        path=http_request.url.path,
-        method=http_request.method
+        path=request.url.path,
+        method=request.method
     )
     
     return PublishResponse(success=True)
@@ -231,8 +231,9 @@ def stream(
 ):
     """Stream messages from a topic using SSE"""
     request_id = getattr(request.state, "request_id", None)
-    user_id = str(user.id)
     user, project_id = user_project
+    user_id = str(user.id)
+    connection_id = None  # Initialize to handle early exceptions
     
     # If project_id is None (JWT auth), find default project
     if project_id is None:
@@ -416,23 +417,14 @@ def stream(
                             # Calculate bytes for quota tracking
                             bytes_count = len(sse_data.encode('utf-8'))
                             
-                            # Check quota before sending
+                            # Check quota and increment usage atomically
                             try:
                                 from app.database import get_session_local
                                 SessionLocal = get_session_local()
                                 quota_db = SessionLocal()
                                 try:
-                                    check_quota(
-                                        db=quota_db,
-                                        user_id=user_id,
-                                        project_id=str(project_id),
-                                        direction="out",
-                                        bytes_count=bytes_count,
-                                        message_count=1
-                                    )
-                                    
-                                    # Increment usage
-                                    increment_usage(
+                                    # Use combined function to avoid lock conflicts
+                                    check_and_increment_usage(
                                         db=quota_db,
                                         user_id=user_id,
                                         project_id=str(project_id),
@@ -502,7 +494,18 @@ def stream(
                 # Signal thread to stop
                 stop_event.set()
                 # Wait a bit for thread to finish, but don't block indefinitely
-                consumer_thread.join(timeout=2)
+                # Use try-except to handle edge cases where join might fail
+                try:
+                    # Check if thread is still alive and not the current thread
+                    if consumer_thread.is_alive() and consumer_thread != threading.current_thread():
+                        consumer_thread.join(timeout=2)
+                except RuntimeError:
+                    # Ignore "cannot join current thread" errors
+                    # The thread will be cleaned up automatically since it's a daemon thread
+                    pass
+                except Exception:
+                    # Ignore any other join errors during cleanup
+                    pass
                 # Clean up connection
                 unregister_connection(user_id, connection_id)
                 
@@ -529,7 +532,9 @@ def stream(
             }
         )
     except Exception as e:
-        unregister_connection(user_id, connection_id)
+        # Only unregister if connection_id was set
+        if connection_id is not None:
+            unregister_connection(user_id, connection_id)
         logger.log_stream(
             event="stream",
             user_id=user_id,
