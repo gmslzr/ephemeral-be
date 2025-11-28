@@ -196,7 +196,6 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
-# Include routers with /api prefix
 app.include_router(auth.router)
 app.include_router(topics.router)
 app.include_router(api_keys.router)
