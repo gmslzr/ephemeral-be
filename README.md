@@ -108,12 +108,12 @@ API documentation (Swagger UI): `http://localhost:8000/docs`
 ### Quick Reference
 
 - **Public**: `/`, `/healthcheck`
-- **Authentication**: `/auth/signup`, `/auth/login`, `/auth/me`, `/auth/me` (PATCH, DELETE)
-- **Projects**: `/projects` (GET, POST), `/projects/{id}` (PATCH, DELETE)
-- **Topics**: `/topics` (GET), `/topics/{name}/publish` (POST), `/topics/{name}/stream` (GET, SSE)
-- **API Keys**: `/api-keys` (GET, POST), `/api-keys/{id}` (DELETE)
-- **Usage**: `/usage` (GET), `/usage/projects` (GET)
-- **Admin**: `/admin/active-streams` (GET)
+- **Authentication**: `/api/auth/signup`, `/api/auth/login`, `/api/auth/me`, `/api/auth/me` (PATCH, DELETE)
+- **Projects**: `/api/projects` (GET, POST), `/api/projects/{id}` (PATCH, DELETE)
+- **Topics**: `/api/topics` (GET), `/api/topics/{name}/publish` (POST), `/api/topics/{name}/stream` (GET, SSE)
+- **API Keys**: `/api/api-keys` (GET, POST), `/api/api-keys/{id}` (DELETE)
+- **Usage**: `/api/usage` (GET), `/api/usage/projects` (GET)
+- **Admin**: `/api/admin/active-streams` (GET)
 
 ### Authentication Methods
 
@@ -148,7 +148,7 @@ When limits are exceeded, the API returns `429 Too Many Requests` with an approp
 
 ```bash
 # Sign up
-curl -X POST http://localhost:8000/auth/signup \
+curl -X POST http://localhost:8000/api/auth/signup \
   -H "Content-Type: application/json" \
   -d '{"email": "test@example.com", "password": "testpass123"}'
 
@@ -156,13 +156,13 @@ curl -X POST http://localhost:8000/auth/signup \
 TOKEN="your-jwt-token-here"
 
 # Publish messages
-curl -X POST http://localhost:8000/topics/events/publish \
+curl -X POST http://localhost:8000/api/topics/events/publish \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"messages": [{"value": {"test": "message"}}]}'
 
 # Stream messages (SSE)
-curl -N http://localhost:8000/topics/events/stream \
+curl -N http://localhost:8000/api/topics/events/stream \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -174,7 +174,7 @@ import requests
 BASE_URL = "http://localhost:8000"
 
 # Sign up
-response = requests.post(f"{BASE_URL}/auth/signup", json={
+response = requests.post(f"{BASE_URL}/api/auth/signup", json={
     "email": "test@example.com",
     "password": "testpass123"
 })
@@ -183,14 +183,14 @@ token = response.json()["token"]
 # Publish
 headers = {"Authorization": f"Bearer {token}"}
 requests.post(
-    f"{BASE_URL}/topics/events/publish",
+    f"{BASE_URL}/api/topics/events/publish",
     headers=headers,
     json={"messages": [{"value": {"test": "data"}}]}
 )
 
 # Stream (using requests with stream=True)
 response = requests.get(
-    f"{BASE_URL}/topics/events/stream",
+    f"{BASE_URL}/api/topics/events/stream",
     headers=headers,
     stream=True
 )
